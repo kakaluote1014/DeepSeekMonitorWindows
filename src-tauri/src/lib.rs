@@ -1,3 +1,235 @@
+// --- DPAPI (Windows Data Protection API)：凭据落盘前加密 ---
+#[repr(C)]
+struct DataBlob {
+    cb_data: u32,
+    pb_data: *mut u8,
+}
+
+#[link(name = "crypt32")]
+extern "system" {
+    fn CryptProtectData(
+        pdata_in: *const DataBlob,
+        sz_data_descr: *const u16,
+        p_optional_entropy: *const DataBlob,
+        pv_reserved: *mut core::ffi::c_void,
+        p_prompt_struct: *const core::ffi::c_void,
+        dw_flags: u32,
+        pdata_out: *mut DataBlob,
+    ) -> i32;
+
+    fn CryptUnprotectData(
+        pdata_in: *const DataBlob,
+        p_sz_data_descr: *mut *mut u16,
+        p_optional_entropy: *const DataBlob,
+        pv_reserved: *mut core::ffi::c_void,
+        p_prompt_struct: *const core::ffi::c_void,
+        dw_flags: u32,
+        pdata_out: *mut DataBlob,
+    ) -> i32;
+}
+
+#[link(name = "kernel32")]
+extern "system" {
+    fn LocalFree(h_mem: isize) -> isize;
+}
+
+fn dpapi_encrypt(plain: &[u8]) -> Result<Vec<u8>, String> {
+    let data_in = DataBlob {
+        cb_data: plain.len() as u32,
+        pb_data: plain.as_ptr() as *mut u8,
+    };
+    let mut data_out = DataBlob {
+        cb_data: 0,
+        pb_data: std::ptr::null_mut(),
+    };
+    let result = unsafe {
+        CryptProtectData(
+            &data_in,
+            std::ptr::null(),
+            std::ptr::null(),
+            std::ptr::null_mut(),
+            std::ptr::null(),
+            0,
+            &mut data_out,
+        )
+    };
+    if result == 0 {
+        return Err("DPAPI 加密失败".to_string());
+    }
+    let encrypted = unsafe {
+        std::slice::from_raw_parts(data_out.pb_data, data_out.cb_data as usize).to_vec()
+    };
+    unsafe {
+        LocalFree(data_out.pb_data as isize);
+    }
+    Ok(encrypted)
+}
+
+fn dpapi_decrypt(encrypted: &[u8]) -> Result<Vec<u8>, String> {
+    let data_in = DataBlob {
+        cb_data: encrypted.len() as u32,
+        pb_data: encrypted.as_ptr() as *mut u8,
+    };
+    let mut data_out = DataBlob {
+        cb_data: 0,
+        pb_data: std::ptr::null_mut(),
+    };
+    let result = unsafe {
+        CryptUnprotectData(
+            &data_in,
+            std::ptr::null_mut(),
+            std::ptr::null(),
+            std::ptr::null_mut(),
+            std::ptr::null(),
+            0,
+            &mut data_out,
+        )
+    };
+    if result == 0 {
+        return Err("DPAPI 解密失败，凭据可能由其他 Windows 用户或系统加密".to_string());
+    }
+    let decrypted = unsafe {
+        std::slice::from_raw_parts(data_out.pb_data, data_out.cb_data as usize).to_vec()
+    };
+    unsafe {
+        LocalFree(data_out.pb_data as isize);
+    }
+    Ok(decrypted)
+}
+
+fn hex_encode(data: &[u8]) -> String {
+    data.iter().map(|b| format!("{:02x}", b)).collect()
+}
+
+fn hex_decode(hex: &str) -> Result<Vec<u8>, String> {
+    if hex.len() % 2 != 0 {
+        return Err("十六进制编码长度无效".to_string());
+    }
+    (0..hex.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).map_err(|e| format!("十六进制解码失败：{e}")))
+        .collect()
+}
+
+fn encrypt_credential(plain: &str) -> String {
+    match dpapi_encrypt(plain.as_bytes()) {
+        Ok(encrypted) => format!("enc1:{}", hex_encode(&encrypted)),
+        Err(_) => {
+            log::warn!("DPAPI 加密失败，将明文保存凭据");
+            plain.to_string()
+        }
+    }
+}
+
+fn decrypt_credential(stored: &str) -> Result<String, String> {
+    if let Some(hex) = stored.strip_prefix("enc1:") {
+        let encrypted = hex_decode(hex)?;
+        let decrypted = dpapi_decrypt(&encrypted)?;
+        String::from_utf8(decrypted).map_err(|e| format!("解密凭据失败：{e}"))
+    } else {
+        Ok(stored.to_string())
+    }
+}
+
+/// 判断磁盘上的凭据是否已经是 DPAPI 密文（旧版本写入的是明文）。
+fn is_encrypted_credential(stored: &str) -> bool {
+    stored.starts_with("enc1:")
+}
+
+/// 模型 ID → 仪表盘分组（分组 key，展示名）。
+///
+/// DeepSeek 会重命名、下线或合并模型 ID：`deepseek-flash`（V4.1 Flash）已经取代
+/// `deepseek-v4-flash`，`deepseek-v4.1-flash-expires-on-0910` 是过渡别名，
+/// 而 `deepseek-v4-flash-vision-exp` 是独立的视觉模型。平台在同一个响应里会同时
+/// 返回新旧 ID，所以这里按前缀归并，避免改名后用量被静默丢弃。
+fn model_group(model: &str) -> Option<(&'static str, &'static str)> {
+    let name = model.trim().to_ascii_lowercase();
+
+    // 视觉模型单独成行，必须先于 flash 前缀判断（它同样以 deepseek-v4-flash 开头）。
+    if name.contains("vision") {
+        return Some(("flashvision", "V4 Flash Vision"));
+    }
+    if name.starts_with("deepseek-flash")
+        || name.starts_with("deepseek-v4-flash")
+        || name.starts_with("deepseek-v4.1-flash")
+    {
+        return Some(("flash", "V4 Flash"));
+    }
+    if name.starts_with("deepseek-v4-pro") || name.starts_with("deepseek-pro") {
+        return Some(("pro", "V4 Pro"));
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hex_roundtrip() {
+        let data = vec![0u8, 1, 15, 16, 127, 128, 255];
+        let encoded = hex_encode(&data);
+        assert_eq!(encoded, "00010f107f80ff");
+        assert_eq!(hex_decode(&encoded).unwrap(), data);
+    }
+
+    #[test]
+    fn hex_decode_rejects_invalid_input() {
+        assert!(hex_decode("abc").is_err());
+        assert!(hex_decode("zz").is_err());
+    }
+
+    #[test]
+    fn credential_roundtrip_is_encrypted() {
+        let stored = encrypt_credential("sk-test-1234567890");
+        assert!(is_encrypted_credential(&stored), "凭据应以 enc1: 开头");
+        assert!(!stored.contains("sk-test-1234567890"), "密文中不应出现明文");
+        assert_eq!(decrypt_credential(&stored).unwrap(), "sk-test-1234567890");
+    }
+
+    #[test]
+    fn plaintext_credential_is_passed_through_for_migration() {
+        let stored = "sk-legacy-plaintext";
+        assert!(!is_encrypted_credential(stored));
+        assert_eq!(decrypt_credential(stored).unwrap(), stored);
+    }
+
+    #[test]
+    fn decrypt_rejects_corrupted_ciphertext() {
+        assert!(decrypt_credential("enc1:00ff00ff").is_err());
+        assert!(decrypt_credential("enc1:not-hex").is_err());
+    }
+
+    #[test]
+    fn model_group_matches_current_platform_ids() {
+        // 2026-10 平台用量接口实际返回的模型 ID。
+        assert_eq!(model_group("deepseek-flash"), Some(("flash", "V4 Flash")));
+        assert_eq!(model_group("deepseek-v4-pro"), Some(("pro", "V4 Pro")));
+        assert_eq!(
+            model_group("deepseek-v4-flash-vision-exp"),
+            Some(("flashvision", "V4 Flash Vision"))
+        );
+    }
+
+    #[test]
+    fn model_group_maps_legacy_and_alias_ids() {
+        assert_eq!(model_group("deepseek-v4-flash"), Some(("flash", "V4 Flash")));
+        assert_eq!(
+            model_group("deepseek-v4.1-flash-expires-on-0910"),
+            Some(("flash", "V4 Flash"))
+        );
+        assert_eq!(model_group("  DEEPSEEK-FLASH  "), Some(("flash", "V4 Flash")));
+        assert_eq!(model_group("deepseek-pro"), Some(("pro", "V4 Pro")));
+    }
+
+    #[test]
+    fn model_group_ignores_unrelated_ids() {
+        assert_eq!(model_group("deepseek-chat & deepseek-reasoner"), None);
+        assert_eq!(model_group("deepseek-reasoner"), None);
+        assert_eq!(model_group(""), None);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     use serde::{Deserialize, Serialize};
@@ -21,7 +253,7 @@ pub fn run() {
         Emitter, Manager, PhysicalPosition, Position, WebviewWindow,
     };
 
-    #[derive(Debug, Default, Deserialize, Serialize)]
+    #[derive(Clone, Debug, Default, Deserialize, Serialize)]
     struct StoredConfig {
         api_key: Option<String>,
         #[serde(default)]
@@ -63,8 +295,44 @@ pub fn run() {
         let text = fs::read_to_string(&path).map_err(|error| error.to_string())?;
         let mut config: StoredConfig =
             serde_json::from_str(&text).map_err(|error| error.to_string())?;
+
+        // 解密失败时不再让整个配置读取失败：记录日志并把该凭据视为未配置，
+        // 用户在设置页重新填写即可恢复。旧版本写入的明文凭据在此顺带迁移为密文。
+        let mut needs_migration = false;
+        if let Some(stored) = config.api_key.clone() {
+            match decrypt_credential(&stored) {
+                Ok(plain) => {
+                    needs_migration |= !is_encrypted_credential(&stored);
+                    config.api_key = Some(plain);
+                }
+                Err(error) => {
+                    log::warn!("API Key 解密失败，已按未配置处理：{error}");
+                    config.api_key = None;
+                }
+            }
+        }
+        if let Some(stored) = config.usage_token.clone() {
+            match decrypt_credential(&stored) {
+                Ok(plain) => {
+                    needs_migration |= !is_encrypted_credential(&stored);
+                    config.usage_token = Some(plain);
+                }
+                Err(error) => {
+                    log::warn!("用量 Token 解密失败，已按未配置处理：{error}");
+                    config.usage_token = None;
+                }
+            }
+        }
         config.refresh_interval_seconds =
             normalize_refresh_interval_seconds(config.refresh_interval_seconds);
+
+        if needs_migration {
+            match write_stored_config(&config) {
+                Ok(()) => log::info!("凭据已迁移为 DPAPI 加密存储"),
+                Err(error) => log::warn!("明文凭据迁移为加密存储失败：{error}"),
+            }
+        }
+
         Ok(config)
     }
 
@@ -76,12 +344,17 @@ pub fn run() {
     }
 
     fn write_stored_config(config: &StoredConfig) -> Result<(), String> {
+        let encrypted_config = StoredConfig {
+            api_key: config.api_key.as_ref().map(|k| encrypt_credential(k)),
+            usage_token: config.usage_token.as_ref().map(|t| encrypt_credential(t)),
+            ..config.clone()
+        };
         let path = config_path()?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(|error| error.to_string())?;
         }
 
-        let text = serde_json::to_string_pretty(config).map_err(|error| error.to_string())?;
+        let text = serde_json::to_string_pretty(&encrypted_config).map_err(|error| error.to_string())?;
         fs::write(path, text).map_err(|error| error.to_string())
     }
 
@@ -174,6 +447,12 @@ pub fn run() {
         let value = api_key.trim().to_string();
         if value.is_empty() {
             return Err("API Key 不能为空".to_string());
+        }
+        if value.len() > 256 {
+            return Err("API Key 长度超出限制".to_string());
+        }
+        if !value.starts_with("sk-") {
+            log::warn!("API Key 格式异常：不以 sk- 开头");
         }
 
         let mut config = read_stored_config()?;
@@ -320,6 +599,9 @@ pub fn run() {
         if value.is_empty() {
             return Err("用量 Token 不能为空".to_string());
         }
+        if value.len() > 4096 {
+            return Err("用量 Token 长度超出限制".to_string());
+        }
         let mut config = read_stored_config()?;
         config.usage_token = Some(value);
         write_stored_config(&config)?;
@@ -361,6 +643,9 @@ pub fn run() {
     }
 
     // 用 token 试调平台用量接口，验证它确实是有效的用量 token。
+    //
+    // 注意：平台在 token 缺失或失效时返回的是 HTTP 200 + `{"code":40002|40003}`，
+    // 只看状态码会把无效 token 当成有效，所以这里必须解析响应体里的 code。
     async fn verify_usage_token(token: &str, month: u32, year: u32) -> Result<(), String> {
         let ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
                   (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36";
@@ -369,18 +654,44 @@ pub fn run() {
         let resp = reqwest::Client::new()
             .get(&url)
             .bearer_auth(token)
-            .header("x-app-version", "1.0.0")
+            .header("x-app-version", env!("CARGO_PKG_VERSION"))
             .header("Accept", "*/*")
             .header("User-Agent", ua)
             .timeout(Duration::from_secs(15))
             .send()
             .await
             .map_err(|error| format!("验证 token 失败：{error}"))?;
-        if resp.status().as_u16() == 200 {
-            Ok(())
-        } else {
-            Err(format!("token 无效：HTTP {}", resp.status().as_u16()))
+
+        let status = resp.status().as_u16();
+        let body = resp
+            .json::<serde_json::Value>()
+            .await
+            .map_err(|error| format!("验证 token 失败：无法解析平台响应（{error}）"))?;
+
+        if status != 200 {
+            return Err(match status {
+                401 => "token 无效或已过期，请重新登录同步".to_string(),
+                429 => "请求过于频繁，请稍后再试".to_string(),
+                code => format!("token 无效：HTTP {code}"),
+            });
         }
+
+        let code = body.get("code").and_then(|value| value.as_i64()).unwrap_or(-1);
+        if code == 0 && body.get("data").is_some_and(|value| !value.is_null()) {
+            return Ok(());
+        }
+
+        let msg = body
+            .get("msg")
+            .and_then(|value| value.as_str())
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        Err(match code {
+            40002 | 40003 => "token 无效或已失效，请重新登录同步".to_string(),
+            _ if msg.is_empty() => format!("token 验证失败：平台返回 code {code}"),
+            _ => format!("token 验证失败：{msg}（code {code}）"),
+        })
     }
 
     fn read_shared_text(path: &Path) -> Option<String> {
@@ -506,7 +817,14 @@ pub fn run() {
       if (window.__dsm_token_hook__) return;
       window.__dsm_token_hook__ = true;
       var done = false;
-      var pending = false;
+      var ALLOWED_HOSTS = ['platform.deepseek.com', 'api.deepseek.com'];
+
+      function isAllowedHost(url) {
+        try {
+          var u = new URL(url, window.location.href);
+          return ALLOWED_HOSTS.indexOf(u.hostname) !== -1;
+        } catch (e) { return false; }
+      }
 
       function deliver(token) {
         if (done) return;
@@ -516,18 +834,7 @@ pub fn run() {
         var now = new Date();
         var y = now.getFullYear();
         var m = now.getMonth() + 1;
-        // 主通道：写入 document.title，原生侧 window.title() 读取。
-        // 外部网站窗口默认不注入 __TAURI__，此通道不依赖它，最可靠。
         try { document.title = 'DSM_USAGE_TOKEN:' + y + ':' + m + ':' + token; } catch (e) {}
-        // 辅通道：若本窗口恰好可用 __TAURI__，直接上报更快
-        try {
-          if (!pending && window.__TAURI__ && window.__TAURI__.core) {
-            pending = true;
-            window.__TAURI__.core.invoke('usage_token_captured', {
-              token: token, month: m, year: y
-            }).then(function() { done = true; }).catch(function() { pending = false; });
-          }
-        } catch (e) {}
       }
 
       function fromAuth(value) {
@@ -540,19 +847,24 @@ pub fn run() {
       if (typeof origFetch === 'function') {
         window.fetch = function(input, init) {
           try {
-            var headers = (init && init.headers) || (input && input.headers);
-            if (headers) {
-              if (typeof Headers !== 'undefined' && headers instanceof Headers) {
-                fromAuth(headers.get('authorization'));
-              } else if (Array.isArray(headers)) {
-                for (var i = 0; i < headers.length; i++) {
-                  if (headers[i] && String(headers[i][0]).toLowerCase() === 'authorization') {
-                    fromAuth(headers[i][1]);
+            var requestUrl = (typeof input === 'string') ? input :
+                             (input && typeof input.url === 'string') ? input.url : '';
+            if (init && typeof init.url === 'string') requestUrl = init.url;
+            if (isAllowedHost(requestUrl)) {
+              var headers = (init && init.headers) || (input && input.headers);
+              if (headers) {
+                if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+                  fromAuth(headers.get('authorization'));
+                } else if (Array.isArray(headers)) {
+                  for (var i = 0; i < headers.length; i++) {
+                    if (headers[i] && String(headers[i][0]).toLowerCase() === 'authorization') {
+                      fromAuth(headers[i][1]);
+                    }
                   }
-                }
-              } else if (typeof headers === 'object') {
-                for (var k in headers) {
-                  if (k.toLowerCase() === 'authorization') fromAuth(headers[k]);
+                } else if (typeof headers === 'object') {
+                  for (var k in headers) {
+                    if (k.toLowerCase() === 'authorization') fromAuth(headers[k]);
+                  }
                 }
               }
             }
@@ -564,9 +876,17 @@ pub fn run() {
       var origSet = XMLHttpRequest.prototype.setRequestHeader;
       XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
         try {
-          if (name && String(name).toLowerCase() === 'authorization') fromAuth(value);
+          if (name && String(name).toLowerCase() === 'authorization' && isAllowedHost(this._dsmUrl || '')) {
+            fromAuth(value);
+          }
         } catch (e) {}
         return origSet.apply(this, arguments);
+      };
+
+      var origOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function(method, url) {
+        try { this._dsmUrl = url; } catch (e) {}
+        return origOpen.apply(this, arguments);
       };
     })();
     "#;
@@ -606,6 +926,10 @@ pub fn run() {
         .center()
         .visible(true)
         .initialization_script(USAGE_SYNC_POLL_JS)
+        .on_navigation(|url| {
+            url.host_str()
+                .is_some_and(|host| host == "platform.deepseek.com" || host == "api.deepseek.com")
+        })
         .on_page_load(|window, payload| {
             if matches!(payload.event(), PageLoadEvent::Finished)
                 && payload
@@ -613,7 +937,6 @@ pub fn run() {
                     .host_str()
                     .is_some_and(|host| host == "platform.deepseek.com")
             {
-                // 双保险：万一 initialization_script 未注入，页面加载完再装一次 hook
                 let _ = window.eval(USAGE_SYNC_POLL_JS);
             }
         })
@@ -665,6 +988,10 @@ pub fn run() {
         pro_cache_hit: u64,
         pro_cache_miss: u64,
         pro_response: u64,
+        vision_tokens: u64,
+        vision_cache_hit: u64,
+        vision_cache_miss: u64,
+        vision_response: u64,
         total_tokens: u64,
         total_cost: f64,
     }
@@ -739,7 +1066,7 @@ pub fn run() {
             let resp = client
                 .get(url)
                 .bearer_auth(token)
-                .header("x-app-version", "1.0.0")
+                .header("x-app-version", env!("CARGO_PKG_VERSION"))
                 .header("Accept", "*/*")
                 .header("User-Agent", ua)
                 .timeout(std::time::Duration::from_secs(15))
@@ -752,9 +1079,32 @@ pub fn run() {
                 429 => return Err("请求过于频繁，请稍后再试".to_string()),
                 code => return Err(format!("用量接口错误：HTTP {code}")),
             }
-            resp.json::<T>()
+
+            // 平台在 token 失效时同样返回 HTTP 200，只是 body 里带非 0 的 code，
+            // 这里先解析 code，避免直接反序列化 data 时报出难以理解的类型错误。
+            let body = resp
+                .json::<serde_json::Value>()
                 .await
-                .map_err(|error| format!("解析用量数据失败：{error}"))
+                .map_err(|error| format!("解析用量数据失败：{error}"))?;
+            if let Some(code) = body.get("code").and_then(|value| value.as_i64()) {
+                if code != 0 {
+                    let msg = body
+                        .get("msg")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or("")
+                        .trim()
+                        .to_string();
+                    return Err(match code {
+                        40002 | 40003 => {
+                            "用量 Token 无效或已失效，请重新登录同步或重新粘贴".to_string()
+                        }
+                        _ if msg.is_empty() => format!("用量接口返回错误：code {code}"),
+                        _ => format!("用量接口返回错误：{msg}（code {code}）"),
+                    });
+                }
+            }
+
+            serde_json::from_value::<T>(body).map_err(|error| format!("解析用量数据失败：{error}"))
         }
 
         fn token_breakdown(usage: &[Entry]) -> (u64, u64, u64, u64, u64) {
@@ -814,14 +1164,26 @@ pub fn run() {
 
         let mut models = Vec::new();
         for model_usage in &amount.data.biz_data.total {
-            let label = match model_usage.model.as_str() {
-                "deepseek-v4-flash" => Some(("flash", "V4 Flash")),
-                "deepseek-v4-pro" => Some(("pro", "V4 Pro")),
-                _ => None,
+            let Some((key, name)) = model_group(&model_usage.model) else {
+                log::warn!(
+                    "未识别的模型 ID「{}」：其用量会计入当月与当日总量，但不会单独成行展示",
+                    model_usage.model
+                );
+                continue;
             };
-            if let Some((key, name)) = label {
-                let (total, request, hit, miss, response) = token_breakdown(&model_usage.usage);
-                models.push(UsageModelSummary {
+            let (total, request, hit, miss, response) = token_breakdown(&model_usage.usage);
+            let cost = cost_for_model(&model_usage.model);
+            // 同一分组的多个历史 / 别名 ID 合并成一行。
+            match models.iter_mut().find(|item| item.key == key) {
+                Some(existing) => {
+                    existing.total_tokens += total;
+                    existing.request_count += request;
+                    existing.cache_hit_tokens += hit;
+                    existing.cache_miss_tokens += miss;
+                    existing.response_tokens += response;
+                    existing.cost += cost;
+                }
+                None => models.push(UsageModelSummary {
                     key: key.to_string(),
                     name: name.to_string(),
                     total_tokens: total,
@@ -829,8 +1191,8 @@ pub fn run() {
                     cache_hit_tokens: hit,
                     cache_miss_tokens: miss,
                     response_tokens: response,
-                    cost: cost_for_model(&model_usage.model),
-                });
+                    cost,
+                }),
             }
         }
 
@@ -853,22 +1215,32 @@ pub fn run() {
             let mut pro_hit = 0u64;
             let mut pro_miss = 0u64;
             let mut pro_resp = 0u64;
+            let mut vision = 0u64;
+            let mut vision_hit = 0u64;
+            let mut vision_miss = 0u64;
+            let mut vision_resp = 0u64;
             let mut total = 0u64;
             for model_usage in &day.data {
                 let (tokens, _, hit, miss, response) = token_breakdown(&model_usage.usage);
                 total += tokens;
-                match model_usage.model.as_str() {
-                    "deepseek-v4-flash" => {
+                match model_group(&model_usage.model).map(|(key, _)| key) {
+                    Some("flash") => {
                         flash += tokens;
                         flash_hit += hit;
                         flash_miss += miss;
                         flash_resp += response;
                     }
-                    "deepseek-v4-pro" => {
+                    Some("pro") => {
                         pro += tokens;
                         pro_hit += hit;
                         pro_miss += miss;
                         pro_resp += response;
+                    }
+                    Some("flashvision") => {
+                        vision += tokens;
+                        vision_hit += hit;
+                        vision_miss += miss;
+                        vision_resp += response;
                     }
                     _ => {}
                 }
@@ -883,6 +1255,10 @@ pub fn run() {
                 pro_cache_hit: pro_hit,
                 pro_cache_miss: pro_miss,
                 pro_response: pro_resp,
+                vision_tokens: vision,
+                vision_cache_hit: vision_hit,
+                vision_cache_miss: vision_miss,
+                vision_response: vision_resp,
                 total_tokens: total,
                 total_cost: cost_by_date.get(&day.date).copied().unwrap_or(0.0),
             });

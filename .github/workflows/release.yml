@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已存在的 tag，例如 v1.2.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    name: Build NSIS installer and publish release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build NSIS installer
+        run: npx tauri build
+
+      - name: Collect installer and checksum
+        id: collect
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path src-tauri/target/release/bundle/nsis/*.exe |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $installer) {
+            throw "未找到 NSIS 安装包，请检查 tauri build 输出。"
+          }
+          $hash = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash
+          "installer=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "sha256=$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "name=$($installer.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Output "安装包：$($installer.Name)"
+          Write-Output "SHA256：$hash"
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          $installer = "${{ steps.collect.outputs.installer }}"
+          $sha = "${{ steps.collect.outputs.sha256 }}"
+          $name = "${{ steps.collect.outputs.name }}"
+
+          $checksumFile = Join-Path $env:RUNNER_TEMP "$name.sha256.txt"
+          "$sha  $name" | Set-Content -LiteralPath $checksumFile -Encoding ascii
+
+          $body = @"
+          ## DeepSeek Monitor Windows $env:TAG
+
+          由社区继续维护的 DeepSeek API 用量监控 Windows 客户端。
+
+          - 安装包：``$name``
+          - SHA256：``$sha``
+          - 覆盖安装即可升级，无需先卸载旧版本。
+
+          完整变更见仓库 README 的更新日志。
+          "@
+          $bodyFile = Join-Path $env:RUNNER_TEMP "release-body.md"
+          Set-Content -LiteralPath $bodyFile -Value $body -Encoding utf8
+
+          gh release create "$env:TAG" `
+            "$installer" `
+            "$checksumFile" `
+            --title "DeepSeek Monitor Windows $env:TAG" `
+            --notes-file $bodyFile `
+            --verify-tag

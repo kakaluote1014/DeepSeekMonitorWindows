@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend type-check and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build frontend bundle
+        run: npx vite build
+
+  rust:
+    name: Rust check (Windows toolchain)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: cargo check
+        working-directory: src-tauri
+        run: cargo check --all-targets
+
+      - name: cargo test
+        working-directory: src-tauri
+        run: cargo test --lib
+
+  secrets-guard:
+    name: Guard against committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tracked files and staged content for credentials
+        shell: pwsh
+        run: |
+          $tracked = git ls-files | Select-String -Pattern 'config\.json$|EBWebView|\.npmrc$'
+          if ($tracked) {
+            throw "敏感文件不应被跟踪：`n$($tracked -join "`n")"
+          }
+
+          $patterns = 'sk-[A-Za-z0-9]{24,}', 'enc1:[0-9a-f]{64,}'
+          foreach ($pattern in $patterns) {
+            $hits = git grep -nE $pattern -- . ':(exclude)*.lock' ':(exclude)src-tauri/Cargo.lock'
+            if ($LASTEXITCODE -eq 0 -and $hits) {
+              throw "疑似密钥被提交（$pattern）：`n$($hits -join "`n")"
+            }
+          }
+
+          Write-Output "未发现被提交的凭据。"
