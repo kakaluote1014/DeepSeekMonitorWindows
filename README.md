@@ -272,6 +272,8 @@ Rust 后端依赖：
 
 ## 更新日志
 
+原生桌面毛玻璃正在 `codex/native-acrylic` 分支验证，尚未包含在 v1.2.1 Release 中。候选版设置页新增默认关闭的「桌面毛玻璃」开关，使用 Windows 11 22H2 及以上的原生 Acrylic；不支持或调用失败时保留普通背景。浏览器预览不能验证原生模糊效果，最终需要隔离 Windows 测试账户中的视觉验收。
+
 完整发布记录见 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases)。
 
 ### v1.2.1

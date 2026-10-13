@@ -165,6 +165,8 @@ export const installDevMock = () => {
         return appConfig;
       case "start_usage_sync":
         return false;
+      case "set_native_material":
+        return { active: false, supported: false, preview: true };
       case "plugin:app|version":
         return "1.2.1";
       case "plugin:event|listen":

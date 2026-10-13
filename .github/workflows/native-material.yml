@@ -1,0 +1,36 @@
+name: Native material candidate
+
+on:
+  push:
+    branches: [codex/native-acrylic]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    name: Build portable Windows candidate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build portable executable
+        shell: pwsh
+        run: npx tauri build --no-bundle
+      - name: Upload candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeepSeekMonitorWindows-native-acrylic-candidate
+          path: src-tauri/target/release/app.exe
+          if-no-files-found: error
+          retention-days: 14

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import { installDevMock } from "./dev-mock";
+import { useNativeMaterial } from "./native-material";
 
 type ViewName = "dashboard" | "settings" | "detail";
 type ModelName = "flash" | "pro" | "flashvision";
@@ -160,6 +161,14 @@ const refreshOptions = [
 ];
 
 function App() {
+  const [theme, setTheme] = React.useState(() => localStorage.getItem("ui-theme") || "dark");
+  const nativeMaterial = useNativeMaterial(theme);
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    localStorage.setItem("ui-theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+    setTheme(next);
+  };
   const [view, setView] = React.useState<ViewName>("dashboard");
   const [model, setModel] = React.useState<ModelName>("flash");
 
@@ -242,6 +251,9 @@ function App() {
     <div className="stage">
       {view === "dashboard" && (
         <DashboardPanel
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          themeBusy={nativeMaterial.state === "applying"}
           balance={balance}
           balanceState={balanceState}
           balanceError={balanceError}
@@ -259,6 +271,7 @@ function App() {
       )}
       {view === "settings" && (
         <SettingsPanel
+          nativeMaterial={nativeMaterial}
           onUsageLoaded={(nextUsage) => {
             setUsage(nextUsage);
             setUsageState("ok");
@@ -290,6 +303,9 @@ function BrandIcon({ size = 32 }: { size?: number }) {
 }
 
 function DashboardPanel({
+  theme,
+  onToggleTheme,
+  themeBusy,
   balance,
   balanceState,
   balanceError,
@@ -301,6 +317,9 @@ function DashboardPanel({
   onSettings,
   onDetail,
 }: {
+  theme: string;
+  onToggleTheme: () => void;
+  themeBusy: boolean;
   balance: BalanceData | null;
   balanceState: BalanceState;
   balanceError: string;
@@ -312,15 +331,6 @@ function DashboardPanel({
   onSettings: () => void;
   onDetail: (model: ModelName) => void;
 }) {
-  const [theme, setTheme] = React.useState<string>(
-    () => localStorage.getItem("ui-theme") || "dark",
-  );
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("ui-theme", next);
-    document.documentElement.setAttribute("data-theme", next);
-  };
   const flash = usage?.models.find((item) => item.key === "flash") ?? null;
   const pro = usage?.models.find((item) => item.key === "pro") ?? null;
   const vision = usage?.models.find((item) => item.key === "flashvision") ?? null;
@@ -345,7 +355,8 @@ function DashboardPanel({
               aria-label="Toggle theme"
               className="skin-toggle"
               title={theme === "dark" ? "Switch to light" : "Switch to dark"}
-              onClick={toggleTheme}
+              onClick={onToggleTheme}
+              disabled={themeBusy}
             >
               <Shirt size={21} />
             </button>
@@ -634,12 +645,14 @@ function UsageChart({
 }
 
 function SettingsPanel({
+  nativeMaterial,
   onBack,
   onUsageLoaded,
   onUsageCleared,
   onRefreshIntervalChanged,
   onAutoRefreshChanged,
 }: {
+  nativeMaterial: ReturnType<typeof useNativeMaterial>;
   onBack: () => void;
   onUsageLoaded: (usage: UsageResult) => void;
   onUsageCleared: () => void;
@@ -963,6 +976,13 @@ function SettingsPanel({
           )}
         </SettingsSection>
 
+        <SettingsSection icon={<SunMedium size={15} />} title="外观">
+          <p>让窗口背后的桌面呈现磨砂效果。支持 Windows 11 22H2 及以上版本，不支持时使用普通背景。</p>
+          <Toggle label="桌面毛玻璃" checked={nativeMaterial.enabled}
+            disabled={nativeMaterial.state === "applying"} onChange={nativeMaterial.changeEnabled} />
+          <p className="material-status" role="status" aria-live="polite">{nativeMaterial.message}</p>
+        </SettingsSection>
+
         <SettingsSection icon={<Power size={15} />} title="开机自启">
           <p>开启后，每次登录 Windows 时自动启动 DeepSeek Monitor。</p>
           <Toggle label="登录时自动启动" checked={autostart} onChange={saveAutostart} />
@@ -1022,15 +1042,17 @@ function Toggle({
   label,
   checked,
   onChange,
+  disabled = false,
 }: {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="toggle-row">
       <span>{label}</span>
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <input type="checkbox" disabled={disabled} checked={checked} onChange={(event) => onChange(event.target.checked)} />
       <i />
     </label>
   );

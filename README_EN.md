@@ -271,6 +271,8 @@ Credential encryption calls the DPAPI shipped with Windows (`crypt32`) and adds 
 
 ## Changelog
 
+Native desktop acrylic is being validated on `codex/native-acrylic` and is not included in the v1.2.1 Release. The candidate adds a "桌面毛玻璃" switch in Settings, off by default, using native Acrylic on Windows 11 22H2 or later. Unsupported systems and failed calls retain the ordinary background. Browser previews cannot verify desktop blur; visual acceptance requires an isolated Windows test account.
+
 See [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases) for the complete release history.
 
 ### v1.2.1

@@ -717,7 +717,23 @@ button:disabled {
 }
 
 .toggle-row input {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.toggle-row input:focus-visible + i {
+  outline: 2px solid var(--brand-light);
+  outline-offset: 3px;
+}
+
+.toggle-row input:disabled + i {
+  opacity: 0.5;
+}
+
+.settings-section .material-status {
+  margin-top: 10px;
 }
 
 .toggle-row i {
@@ -1388,6 +1404,19 @@ button:disabled {
 }
 
 /* 皮肤选择按钮与弹窗 */
+[data-native-material="active"] .panel,
+[data-native-material="active"] .settings-panel {
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(83, 76, 49, 0.42), rgba(41, 48, 29, 0.38));
+}
+
+[data-theme="light"][data-native-material="active"] .panel,
+[data-theme="light"][data-native-material="active"] .settings-panel {
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(190, 217, 255, 0.2), transparent 62%),
+    linear-gradient(145deg, rgba(252, 253, 255, 0.38), rgba(235, 242, 251, 0.46));
+}
+
 .skin-menu-wrap {
   position: relative;
   pointer-events: auto;

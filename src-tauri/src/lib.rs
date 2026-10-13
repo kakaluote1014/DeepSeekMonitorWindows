@@ -1,3 +1,5 @@
+mod material;
+
 // --- DPAPI (Windows Data Protection API)：凭据落盘前加密 ---
 #[repr(C)]
 struct DataBlob {
@@ -440,6 +442,26 @@ pub fn run() {
     #[tauri::command]
     fn get_app_config() -> Result<AppConfig, String> {
         to_app_config(read_stored_config()?)
+    }
+
+    #[tauri::command]
+    async fn set_native_material(
+        window: WebviewWindow,
+        enabled: bool,
+        dark: bool,
+    ) -> Result<crate::material::MaterialResult, String> {
+        if window.label() != "main" {
+            return Err("仅主窗口可以修改桌面材质".to_string());
+        }
+        let native_window = window.clone();
+        let (sender, mut receiver) = tauri::async_runtime::channel(1);
+        window.run_on_main_thread(move || {
+            let result = native_window.hwnd()
+                .map_err(|error| error.to_string())
+                .and_then(|hwnd| crate::material::apply(hwnd.0 as isize, enabled, dark));
+            let _ = sender.try_send(result);
+        }).map_err(|error| error.to_string())?;
+        receiver.recv().await.ok_or_else(|| "窗口效果任务未完成".to_string())?
     }
 
     #[tauri::command]
@@ -1287,6 +1309,7 @@ pub fn run() {
         .manage(Arc::new(AtomicBool::new(false)))
         .invoke_handler(tauri::generate_handler![
             hide_main_window,
+            set_native_material,
             get_app_config,
             save_api_key,
             clear_api_key,
