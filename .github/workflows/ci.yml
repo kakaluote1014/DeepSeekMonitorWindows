@@ -60,7 +60,7 @@ jobs:
       - name: Check tracked files and staged content for credentials
         shell: pwsh
         run: |
-          $tracked = git ls-files | Select-String -Pattern 'config\.json$|EBWebView|\.npmrc$'
+          $tracked = git ls-files | Select-String -Pattern '(^|/)config\.json$|EBWebView|(^|/)\.npmrc$'
           if ($tracked) {
             throw "敏感文件不应被跟踪：`n$($tracked -join "`n")"
           }

@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import "./styles.css";
+import { installDevMock } from "./dev-mock";
 
 type ViewName = "dashboard" | "settings" | "detail";
 type ModelName = "flash" | "pro" | "flashvision";
@@ -1174,6 +1175,9 @@ function ModelDetailPanel({
 
 // Apply the saved theme before first render to avoid a flash of the wrong skin.
 document.documentElement.setAttribute("data-theme", localStorage.getItem("ui-theme") || "dark");
+
+// Browser preview only: installs demo IPC data when no real Tauri backend is present.
+installDevMock();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

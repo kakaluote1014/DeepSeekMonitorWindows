@@ -1162,7 +1162,7 @@ pub fn run() {
                 .unwrap_or(0.0)
         };
 
-        let mut models = Vec::new();
+        let mut models: Vec<UsageModelSummary> = Vec::new();
         for model_usage in &amount.data.biz_data.total {
             let Some((key, name)) = model_group(&model_usage.model) else {
                 log::warn!(
