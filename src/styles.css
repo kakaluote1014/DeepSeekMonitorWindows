@@ -63,7 +63,20 @@ button {
   height: 100%;
   border-radius: 22px;
   padding: 0 clamp(10px, 2.4vw, 18px) clamp(10px, 2.4vh, 18px);
-  overflow: hidden;
+  /* 窗口拉到最小尺寸时内容可能装不下，保留垂直滚动兜底。 */
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--fg), 0.3) transparent;
+}
+
+.panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+.panel::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(var(--fg), 0.3);
 }
 
 .dashboard-panel {
@@ -71,7 +84,9 @@ button {
   flex-direction: column;
   gap: clamp(6px, 1.4vh, 10px);
   min-height: 0;
-  overflow: hidden;
+  /* 窗口高度不足时允许纵向滚动，避免图表底部被直接裁掉。 */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .panel-header {

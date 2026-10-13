@@ -16,15 +16,21 @@ Important: This project is not an official DeepSeek product.
 
 ## Screenshots
 
-> The screenshots show the v1.1.0 interface. v1.2.0 adds a V4 Flash Vision row to the dashboard; the rest of the layout is unchanged.
+The v1.2.0 dashboard at the default 384×660 window size, with the new V4 Flash Vision row:
 
-### Previous UI
+![v1.2.0 dashboard](screenshots/v1.2.0/dashboard-384x660.png)
+
+The window is freely resizable; a taller window expands the chart (600×900):
+
+![v1.2.0 taller window](screenshots/v1.2.0/dashboard-tall-600x900.png)
+
+The minimum window size 340×540 keeps the layout intact and scrolls vertically when needed:
+
+![v1.2.0 minimum window](screenshots/v1.2.0/dashboard-min-340x540.png)
+
+Previous interface (v1.1.0):
 
 ![DeepSeek Monitor Windows overview](screenshots/overview.png)
-
-### Current UI
-
-![DeepSeek Monitor Windows current UI](screenshots/new-ui.png)
 
 ## Upstream Projects and Credits
 
@@ -112,6 +118,10 @@ npx tauri build
 The current Tauri bundle target is an NSIS installer. Build artifacts are generated in `src-tauri/target/release/bundle/nsis/`.
 
 If you see `Visual Studio Build Tools not found`, install Visual Studio Build Tools 2022 and verify that the Desktop development with C++ workload is selected.
+
+### Browser Preview Without Rust
+
+Contributors who only touch the UI do not need Rust or Visual Studio Build Tools: when `npm run dev` cannot detect Tauri IPC in a plain browser, it loads demo data from `src/dev-mock.ts` so the dashboard, settings, and detail views render immediately. Production builds drop that code entirely through `import.meta.env.DEV`, so it never reaches `dist`.
 
 ### Continuous Integration and Releases
 

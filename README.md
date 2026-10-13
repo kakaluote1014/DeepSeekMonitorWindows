@@ -20,15 +20,21 @@ DeepSeek Monitor Windows is a Windows desktop adaptation inspired by JayHome137/
 
 ## 页面截图
 
-> 截图为 v1.1.0 界面。v1.2.0 在仪表盘新增了 V4 Flash Vision 模型行，其余布局一致。
+v1.2.0 主面板，默认窗口 384×660，仪表盘新增 V4 Flash Vision 行：
 
-### 旧版本 UI
+![v1.2.0 主面板](screenshots/v1.2.0/dashboard-384x660.png)
+
+窗口可自由拉伸，拉高后图表完整展开（600×900）：
+
+![v1.2.0 拉高窗口](screenshots/v1.2.0/dashboard-tall-600x900.png)
+
+最小窗口 340×540 仍保持完整布局，内容超出时可纵向滚动：
+
+![v1.2.0 最小窗口](screenshots/v1.2.0/dashboard-min-340x540.png)
+
+历史界面（v1.1.0）：
 
 ![DeepSeek Monitor Windows 页面总览](screenshots/overview.png)
-
-### 新版本 UI
-
-![DeepSeek Monitor Windows 新版本 UI](screenshots/new-ui.png)
 
 ## 上游项目与致谢
 
@@ -117,8 +123,11 @@ Tauri 打包目标当前配置为 NSIS 安装包，产物位于 `src-tauri/targe
 
 如果出现 `Visual Studio Build Tools not found`，请安装 Visual Studio Build Tools 2022，并确认已勾选 `Desktop development with C++` 组件。
 
-### 持续集成与发版
+### 无 Rust 环境预览界面
 
+只改界面的贡献者不需要安装 Rust 和 Visual Studio Build Tools：`npm run dev` 在普通浏览器里检测不到 Tauri IPC 时，会自动加载 `src/dev-mock.ts` 的演示数据，可直接看到仪表盘、设置页和详情页。生产构建会通过 `import.meta.env.DEV` 把这段代码整体剔除，不会进入 `dist` 产物。
+
+### 持续集成与发版
 仓库自带 GitHub Actions 工作流，本地不装 Rust 也能完成校验与发版：
 
 - `.github/workflows/ci.yml`：每次推送和 PR 会执行前端 `tsc --noEmit` + `vite build`、Windows 上的 `cargo check --all-targets` 与 `cargo test`，并检查是否有凭据被误提交。
