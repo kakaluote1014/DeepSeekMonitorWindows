@@ -74,7 +74,7 @@ Please report bugs and feature requests in [this repository's issues](https://gi
 
 Download and run `DeepSeekMonitorWindows_1.2.0_x64-setup.exe` from [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest). You do not need to uninstall an older version before installing an update.
 
-The installer SHA256 is published with each release in the `*.sha256.txt` asset.
+SHA256 for the v1.2.0 installer `DeepSeekMonitorWindows_1.2.0_x64-setup.exe`: `AB4A339F04F82C0A6E869FC02643FC0F1B8E2AC73D50026BC9EFB86933E1A48D`. The release also includes a `*.sha256.txt` checksum asset.
 
 Runtime requirements:
 

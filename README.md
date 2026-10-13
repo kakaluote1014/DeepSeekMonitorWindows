@@ -78,7 +78,7 @@ v1.2.0 主面板，默认窗口 384×660，仪表盘新增 V4 Flash Vision 行�
 
 从 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest) 下载并运行 `DeepSeekMonitorWindows_1.2.0_x64-setup.exe`。覆盖安装新版本前无需卸载旧版本。
 
-安装包 SHA256 随 Release 一起发布，见发布页附件的 `*.sha256.txt`。
+v1.2.0 安装包 `DeepSeekMonitorWindows_1.2.0_x64-setup.exe` 的 SHA256：`AB4A339F04F82C0A6E869FC02643FC0F1B8E2AC73D50026BC9EFB86933E1A48D`。发布页同时提供 `*.sha256.txt` 校验附件。
 
 运行环境要求：
 
