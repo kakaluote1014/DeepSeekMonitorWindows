@@ -20,6 +20,12 @@ DeepSeek Monitor Windows is a Windows desktop adaptation inspired by JayHome137/
 
 ## 页面截图
 
+v1.2.1 浅色磨砂玻璃主题：银白半透明底、淡蓝高光，以及统一的卡片、设置页和详情页材质。点击主面板顶部的衣服图标可切换主题，已有主题选择会保留。
+
+下图使用浏览器演示数据，仅展示界面样式；本版本未接入 Windows 原生桌面背景模糊。
+
+![v1.2.1 浅色磨砂玻璃主题（演示数据）](screenshots/v1.2.1/dashboard-light.png)
+
 v1.2.0 主面板，默认窗口 384×660，仪表盘新增 V4 Flash Vision 行：
 
 ![v1.2.0 主面板](screenshots/v1.2.0/dashboard-384x660.png)
@@ -76,9 +82,9 @@ v1.2.0 主面板，默认窗口 384×660，仪表盘新增 V4 Flash Vision 行�
 
 ## 下载安装
 
-从 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest) 下载并运行 `DeepSeekMonitorWindows_1.2.0_x64-setup.exe`。覆盖安装新版本前无需卸载旧版本。
+从 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest) 下载并运行 `DeepSeekMonitorWindows_1.2.1_x64-setup.exe`。覆盖安装新版本前无需卸载旧版本。
 
-v1.2.0 安装包 `DeepSeekMonitorWindows_1.2.0_x64-setup.exe` 的 SHA256：`AB4A339F04F82C0A6E869FC02643FC0F1B8E2AC73D50026BC9EFB86933E1A48D`。发布页同时提供 `*.sha256.txt` 校验附件。
+v1.2.1 安装包 SHA256 见发布页的 `*.sha256.txt` 校验附件。
 
 运行环境要求：
 
@@ -268,7 +274,16 @@ Rust 后端依赖：
 
 完整发布记录见 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases)。
 
+### v1.2.1
+
+- 升级浅色主题为银白磨砂玻璃风格，加入淡蓝高光、柔和阴影与统一的卡片、按钮、输入框材质，覆盖主面板、设置页和模型详情页。
+- 主面板与详情页的 Flash 显示名称更新为 `V4.1 Flash`，继续保留旧模型 ID 的用量归并与 V4 Flash Vision 历史用量。
+- 改善浅色主题的文本对比、键盘焦点提示与减少动态效果设置的支持。
+- 主题仍通过顶部衣服图标切换并保存选择；本版本未接入 Windows 原生桌面背景模糊。
+
 ### v1.2.0
+
+安装包 SHA256：`AB4A339F04F82C0A6E869FC02643FC0F1B8E2AC73D50026BC9EFB86933E1A48D`。
 
 本版本由社区续作维护，整合了上游两个长期未合并的 PR，并补充修复其遗留问题。
 

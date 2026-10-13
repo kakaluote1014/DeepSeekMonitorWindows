@@ -16,6 +16,12 @@ Important: This project is not an official DeepSeek product.
 
 ## Screenshots
 
+The v1.2.1 light frosted-glass theme uses a translucent silver-white surface, pale blue highlights, and consistent materials across cards, Settings, and model details. Use the shirt icon in the dashboard header to switch themes; existing theme preferences are preserved.
+
+The following screenshot uses browser demo data to show the interface. This release does not enable native Windows desktop background blur.
+
+![v1.2.1 light frosted-glass theme (demo data)](screenshots/v1.2.1/dashboard-light.png)
+
 The v1.2.0 dashboard at the default 384×660 window size, with the new V4 Flash Vision row:
 
 ![v1.2.0 dashboard](screenshots/v1.2.0/dashboard-384x660.png)
@@ -72,9 +78,9 @@ Please report bugs and feature requests in [this repository's issues](https://gi
 
 ## Download and Install
 
-Download and run `DeepSeekMonitorWindows_1.2.0_x64-setup.exe` from [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest). You do not need to uninstall an older version before installing an update.
+Download and run `DeepSeekMonitorWindows_1.2.1_x64-setup.exe` from [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest). You do not need to uninstall an older version before installing an update.
 
-SHA256 for the v1.2.0 installer `DeepSeekMonitorWindows_1.2.0_x64-setup.exe`: `AB4A339F04F82C0A6E869FC02643FC0F1B8E2AC73D50026BC9EFB86933E1A48D`. The release also includes a `*.sha256.txt` checksum asset.
+The v1.2.1 installer SHA256 is available in the release's `*.sha256.txt` checksum asset.
 
 Runtime requirements:
 
@@ -267,7 +273,16 @@ Credential encryption calls the DPAPI shipped with Windows (`crypt32`) and adds 
 
 See [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases) for the complete release history.
 
+### v1.2.1
+
+- Refreshed the light theme with silver-white frosted-glass surfaces, pale blue highlights, soft shadows, and consistent cards, buttons, and inputs across the dashboard, Settings, and model details.
+- Updated the Flash display name to `V4.1 Flash` on the dashboard and detail page while preserving legacy model ID grouping and V4 Flash Vision usage history.
+- Improved light-theme text contrast, keyboard focus indicators, and support for reduced-motion preferences.
+- Themes remain selectable through the shirt icon and retain the saved preference. This release does not enable native Windows desktop background blur.
+
 ### v1.2.0
+
+Installer SHA256: `AB4A339F04F82C0A6E869FC02643FC0F1B8E2AC73D50026BC9EFB86933E1A48D`.
 
 This release is maintained by the community continuation. It integrates two long-unmerged upstream pull requests and fixes the issues left in them.
 

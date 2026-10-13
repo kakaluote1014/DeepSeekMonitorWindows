@@ -1126,44 +1126,120 @@ button:disabled {
 
 /* ==================== Light glass skin ==================== */
 [data-theme="light"] {
-  --fg: 25, 48, 68;
-  --text-strong: rgba(22, 42, 64, 0.92);
-  --brand: #2d6cf6;
-  --brand-light: #4d84ff;
+  --fg: 30, 43, 62;
+  --text-strong: #1e2b3e;
+  --text-muted: rgba(var(--fg), 0.72);
+  --text-faint: rgba(var(--fg), 0.6);
+  --brand: #336deb;
+  --brand-light: #4277e7;
   --flash: #2d7ff5;
   --pro: #c02fde;
   --vision: #e23e5e;
-  --orange: #ef8400;
+  --orange: #b96912;
   --skin-accent: #2d6cf6;
+  --glass-surface: linear-gradient(155deg, rgba(255, 255, 255, 0.82), rgba(246, 250, 255, 0.58));
+  --glass-border: rgba(255, 255, 255, 0.88);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 3px 12px rgba(42, 69, 103, 0.06);
 }
 
 [data-theme="light"] .panel,
 [data-theme="light"] .settings-panel {
-  border-color: rgba(255, 255, 255, 0.55);
+  border-color: var(--glass-border);
   background:
-    linear-gradient(150deg, rgba(150, 205, 236, 0.85), rgba(172, 224, 206, 0.82)),
-    rgba(216, 233, 239, 0.92);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.6);
+    radial-gradient(ellipse at 0% 0%, rgba(190, 217, 255, 0.36), transparent 62%),
+    radial-gradient(ellipse at 100% 100%, rgba(202, 218, 246, 0.28), transparent 65%),
+    linear-gradient(145deg, rgba(252, 253, 255, 0.8), rgba(235, 242, 251, 0.72));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), inset 0 0 0 1px rgba(105, 142, 190, 0.08);
+  backdrop-filter: blur(32px) saturate(1.25);
+  -webkit-backdrop-filter: blur(32px) saturate(1.25);
+}
+
+[data-theme="light"] .card,
+[data-theme="light"] .detail-chart {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 [data-theme="light"] .card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.42));
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.7), 0 2px 8px rgba(40, 80, 120, 0.08);
+  border-radius: 16px;
+}
+
+[data-theme="light"] .panel-header {
+  padding-top: 16px;
+  margin-bottom: 5px;
+}
+
+[data-theme="light"] .title-lockup {
+  gap: 8px;
+}
+
+[data-theme="light"] .title-lockup h1,
+[data-theme="light"] .settings-header h1 {
+  font-weight: 650;
+}
+
+[data-theme="light"] .title-lockup h1 {
+  font-size: 14px;
+}
+
+[data-theme="light"] .header-actions {
+  gap: 5px;
 }
 
 [data-theme="light"] .header-actions button,
 [data-theme="light"] .floating-close {
   color: rgba(22, 42, 64, 0.82);
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+[data-theme="light"] .header-actions button:hover,
+[data-theme="light"] .floating-close:hover {
+  color: var(--brand);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+[data-theme="light"] button:focus-visible,
+[data-theme="light"] input:focus-visible,
+[data-theme="light"] a:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+[data-theme="light"] .usage-row {
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+[data-theme="light"] .usage-row:hover {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.98), rgba(230, 240, 255, 0.8));
+  box-shadow: var(--glass-shadow), 0 4px 16px rgba(48, 95, 171, 0.09);
+}
+
+[data-theme="light"] .usage-main h2 {
+  color: var(--text-strong);
+  font-weight: 650;
+}
+
+[data-theme="light"] .caption-with-icon,
+[data-theme="light"] .chart-total,
+[data-theme="light"] .token-line,
+[data-theme="light"] .cache-hit-rate,
+[data-theme="light"] .bar-day,
+[data-theme="light"] .settings-section p {
+  font-weight: 600;
 }
 
 [data-theme="light"] .caption-with-icon.orange {
-  color: rgba(216, 118, 8, 1);
+  color: var(--orange);
 }
 
 [data-theme="light"] .status-pill {
-  background: rgba(34, 160, 90, 0.16);
-  color: #15a34a;
+  background: rgba(36, 158, 100, 0.09);
+  color: #187447;
+  box-shadow: inset 0 0 0 1px rgba(36, 158, 100, 0.08);
 }
 [data-theme="light"] .status-pill span {
   background: #15a34a;
@@ -1177,17 +1253,28 @@ button:disabled {
 }
 
 [data-theme="light"] .balance-amount {
-  color: #2d6cf6;
+  color: var(--brand);
+  font-weight: 650;
+  letter-spacing: -0.8px;
+}
+[data-theme="light"] .balance-amount.balance-dim {
+  color: var(--text-muted);
 }
 [data-theme="light"] .balance-error {
   color: #dc2626;
 }
 [data-theme="light"] .mini-card {
-  background: rgba(255, 255, 255, 0.52);
+  border-radius: 12px;
+  background: linear-gradient(150deg, rgba(240, 246, 255, 0.78), rgba(255, 255, 255, 0.68));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.9), inset 0 0 0 1px rgba(109, 141, 185, 0.08);
+}
+[data-theme="light"] .mini-card strong {
+  color: var(--text-strong);
+  font-weight: 650;
 }
 
 [data-theme="light"] .cache-hit-rate.flash {
-  color: #0e9aa0;
+  color: #177c84;
 }
 [data-theme="light"] .cache-hit-rate.pro {
   color: #9333ea;
@@ -1198,14 +1285,18 @@ button:disabled {
 }
 
 [data-theme="light"] .model-badge.flash {
-  background: rgba(45, 127, 245, 0.18);
+  background: linear-gradient(145deg, rgba(223, 236, 255, 0.92), rgba(238, 246, 255, 0.7));
 }
 [data-theme="light"] .model-badge.pro {
-  background: rgba(192, 47, 222, 0.18);
+  background: linear-gradient(145deg, rgba(243, 224, 255, 0.92), rgba(249, 239, 255, 0.7));
 }
 
 [data-theme="light"] .model-badge.vision {
-  background: rgba(226, 62, 94, 0.16);
+  background: linear-gradient(145deg, rgba(255, 227, 235, 0.92), rgba(255, 242, 246, 0.7));
+}
+
+[data-theme="light"] .model-badge {
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.9);
 }
 
 [data-theme="light"] .progress-track {
@@ -1216,7 +1307,7 @@ button:disabled {
 [data-theme="light"] .cache-bar .seg.hit,
 [data-theme="light"] .chart-legend-item .dot.hit,
 [data-theme="light"] .bar-tooltip-row .dot.hit {
-  background: #10b981;
+  background: #249f89;
 }
 
 [data-theme="light"] .detail-bar-stacked .seg.response,
@@ -1226,13 +1317,10 @@ button:disabled {
   background: #8b5cf6;
 }
 
-[data-theme="light"] .detail-chart {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.34));
-}
-
 [data-theme="light"] .bar-tooltip {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(40, 70, 100, 0.14);
+  background: rgba(250, 252, 255, 0.94);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow), 0 8px 24px rgba(30, 53, 84, 0.12);
 }
 [data-theme="light"] .bar-tooltip-total {
   border-top-color: rgba(40, 70, 100, 0.14);
@@ -1245,12 +1333,32 @@ button:disabled {
 }
 
 [data-theme="light"] .settings-section {
-  border-top-color: rgba(40, 70, 100, 0.14);
+  border-top-color: rgba(72, 105, 149, 0.12);
 }
 [data-theme="light"] .key-row input {
-  border-color: rgba(40, 70, 100, 0.18);
-  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(72, 105, 149, 0.16);
+  background: rgba(255, 255, 255, 0.74);
   color: #1a2a40;
+  border-radius: 9px;
+  box-shadow: inset 0 1px 3px rgba(45, 73, 109, 0.04);
+}
+[data-theme="light"] .key-row input::placeholder {
+  color: var(--text-faint);
+}
+[data-theme="light"] .primary {
+  background: linear-gradient(160deg, #4c86f5, #336deb);
+  color: #fff;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.22), 0 2px 5px rgba(51, 109, 235, 0.16);
+}
+[data-theme="light"] .key-row button:not(.primary),
+[data-theme="light"] .secondary,
+[data-theme="light"] .back-button {
+  background: var(--glass-surface);
+  box-shadow: var(--glass-shadow), inset 0 0 0 1px rgba(72, 105, 149, 0.1);
+}
+[data-theme="light"] .back-button {
+  color: var(--text-strong);
+  font-weight: 650;
 }
 [data-theme="light"] .configured {
   color: #16a34a;
@@ -1263,9 +1371,20 @@ button:disabled {
 }
 [data-theme="light"] .segmented button {
   color: #1a2a40;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(72, 105, 149, 0.08);
 }
 [data-theme="light"] .segmented .selected {
+  background: var(--brand);
   color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="light"] *,
+  [data-theme="light"] *::before,
+  [data-theme="light"] *::after {
+    transition: none;
+  }
 }
 
 /* 皮肤选择按钮与弹窗 */

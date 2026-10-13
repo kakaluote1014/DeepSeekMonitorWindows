@@ -86,7 +86,7 @@ const buildUsage = () => {
   const models: UsageModel[] = [
     {
       key: "flash",
-      name: "V4 Flash",
+      name: "V4.1 Flash",
       totalTokens: sum((day) => day.flashTokens),
       requestCount: 348,
       cacheHitTokens: sum((day) => day.flashCacheHit),
@@ -166,7 +166,7 @@ export const installDevMock = () => {
       case "start_usage_sync":
         return false;
       case "plugin:app|version":
-        return "1.2.0";
+        return "1.2.1";
       case "plugin:event|listen":
         return nextCallbackId;
       case "plugin:event|unlisten":

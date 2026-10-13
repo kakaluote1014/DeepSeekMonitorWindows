@@ -470,7 +470,7 @@ function UsageRow({
 }) {
   const isFlash = modelKey === "flash";
   const isVision = modelKey === "flashvision";
-  const name = isFlash ? "V4 Flash" : isVision ? "V4 Flash Vision" : "V4 Pro";
+  const name = isFlash ? "V4.1 Flash" : isVision ? "V4 Flash Vision" : "V4 Pro";
   const tokensText = data
     ? `${fmtInt(data.totalTokens)} Tokens`
     : state === "loading"
@@ -1050,7 +1050,7 @@ function ModelDetailPanel({
   const isFlash = model === "flash";
   const isVision = model === "flashvision";
   const data = usage?.models.find((item) => item.key === model) ?? null;
-  const title = isFlash ? "V4 Flash" : isVision ? "V4 Flash Vision" : "V4 Pro";
+  const title = isFlash ? "V4.1 Flash" : isVision ? "V4 Flash Vision" : "V4 Pro";
   const tintClass = isFlash ? "flash" : isVision ? "vision" : "pro";
   const cost = data ? fmtMoney(data.cost) : "—";
   const totalText = data ? fmtTokensShort(data.totalTokens) : "—";
