@@ -90,7 +90,7 @@ Please report bugs and feature requests in [this repository's issues](https://gi
 
 Download and run `DeepSeekMonitorWindows_1.2.2_x64-setup.exe` from [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest). You do not need to uninstall an older version before installing an update.
 
-The v1.2.2 installer SHA256 is available in the release's `*.sha256.txt` checksum asset.
+SHA256 for the v1.2.2 installer `DeepSeekMonitorWindows_1.2.2_x64-setup.exe`: `76104C9355CBC53E2C036FE3859AA4BF889610276BA460F70212173A330CE194`. The release also includes a `*.sha256.txt` checksum asset.
 
 Native desktop acrylic requires Windows 11 22H2 (build 22621) or later. Windows 10 and older Windows 11 builds continue to use the ordinary background.
 

@@ -94,7 +94,7 @@ v1.2.0 主面板，默认窗口 384×660，仪表盘新增 V4 Flash Vision 行�
 
 从 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest) 下载并运行 `DeepSeekMonitorWindows_1.2.2_x64-setup.exe`。覆盖安装新版本前无需卸载旧版本。
 
-v1.2.2 安装包 SHA256 见发布页的 `*.sha256.txt` 校验附件。
+v1.2.2 安装包 `DeepSeekMonitorWindows_1.2.2_x64-setup.exe` 的 SHA256：`76104C9355CBC53E2C036FE3859AA4BF889610276BA460F70212173A330CE194`。发布页同时提供 `*.sha256.txt` 校验附件。
 
 原生桌面毛玻璃需要 Windows 11 22H2（build 22621）及以上版本；Windows 10 和较旧 Windows 11 可继续使用普通背景。
 
