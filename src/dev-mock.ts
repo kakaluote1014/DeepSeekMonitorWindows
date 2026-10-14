@@ -168,7 +168,7 @@ export const installDevMock = () => {
       case "set_native_material":
         return { active: false, supported: false, preview: true };
       case "plugin:app|version":
-        return "1.2.1";
+        return "1.2.2";
       case "plugin:event|listen":
         return nextCallbackId;
       case "plugin:event|unlisten":

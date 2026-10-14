@@ -16,6 +16,16 @@ Important: This project is not an official DeepSeek product.
 
 ## Screenshots
 
+Native Acrylic was checked on Windows 11 build 22631 using a candidate with isolated configuration and WebView data. No account was configured, and a controlled colored-stripe window was placed behind the app.
+
+With native acrylic off, the background stripes remain sharp:
+
+![Native acrylic off (isolated Windows check)](screenshots/v1.2.2/native-acrylic-off.png)
+
+With it on, Windows blurs the stripes behind the window. In v1.2.2, enable "桌面毛玻璃" under Settings → "外观". It is off by default:
+
+![Native acrylic on (isolated Windows check)](screenshots/v1.2.2/native-acrylic-on.png)
+
 The v1.2.1 light frosted-glass theme uses a translucent silver-white surface, pale blue highlights, and consistent materials across cards, Settings, and model details. Use the shirt icon in the dashboard header to switch themes; existing theme preferences are preserved.
 
 The following screenshot uses browser demo data to show the interface. This release does not enable native Windows desktop background blur.
@@ -78,9 +88,11 @@ Please report bugs and feature requests in [this repository's issues](https://gi
 
 ## Download and Install
 
-Download and run `DeepSeekMonitorWindows_1.2.1_x64-setup.exe` from [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest). You do not need to uninstall an older version before installing an update.
+Download and run `DeepSeekMonitorWindows_1.2.2_x64-setup.exe` from [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest). You do not need to uninstall an older version before installing an update.
 
-SHA256 for the v1.2.1 installer `DeepSeekMonitorWindows_1.2.1_x64-setup.exe`: `D7F88BBCD204A3B38C2E722720D2A3D82975EC90B37586067C5DCE7211426767`. The release also includes a `*.sha256.txt` checksum asset.
+The v1.2.2 installer SHA256 is available in the release's `*.sha256.txt` checksum asset.
+
+Native desktop acrylic requires Windows 11 22H2 (build 22621) or later. Windows 10 and older Windows 11 builds continue to use the ordinary background.
 
 Runtime requirements:
 
@@ -271,11 +283,20 @@ Credential encryption calls the DPAPI shipped with Windows (`crypt32`) and adds 
 
 ## Changelog
 
-Native desktop acrylic is being validated on `codex/native-acrylic` and is not included in the v1.2.1 Release. The candidate adds a "桌面毛玻璃" switch in Settings, off by default, using native Acrylic on Windows 11 22H2 or later. Unsupported systems and failed calls retain the ordinary background. Browser previews cannot verify desktop blur; visual acceptance requires an isolated Windows test account.
-
 See [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases) for the complete release history.
 
+### v1.2.2
+
+- Added native desktop Acrylic on Windows 11 22H2 or later, controlled by the "桌面毛玻璃" switch in Settings → "外观", off by default.
+- Unsupported systems and failed native calls retain the ordinary background. The preference uses separate UI local storage without changing the credential configuration format.
+- Native materials follow the light/dark theme and use more translucent surfaces with matching corners when enabled.
+- Checked the candidate on Windows 11 build 22631 with isolated configuration and WebView data: native appearance, titlebar dragging, three window sizes, focus changes, preference restoration, and disabling the effect.
+- Added native material tests, bringing the Rust suite to 11 tests, without adding a plugin or dependency.
+- Updated the Settings version fallback display.
+
 ### v1.2.1
+
+Installer SHA256: `D7F88BBCD204A3B38C2E722720D2A3D82975EC90B37586067C5DCE7211426767`.
 
 - Refreshed the light theme with silver-white frosted-glass surfaces, pale blue highlights, soft shadows, and consistent cards, buttons, and inputs across the dashboard, Settings, and model details.
 - Updated the Flash display name to `V4.1 Flash` on the dashboard and detail page while preserving legacy model ID grouping and V4 Flash Vision usage history.

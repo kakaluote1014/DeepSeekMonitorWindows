@@ -20,6 +20,16 @@ DeepSeek Monitor Windows is a Windows desktop adaptation inspired by JayHome137/
 
 ## 页面截图
 
+原生 Acrylic 功能的 Windows 11 build 22631 实测。截图来自候选程序的独立配置和 WebView 目录，账户未配置，窗口背后是受控彩色条纹测试背景。
+
+关闭原生毛玻璃时，背景条纹清晰可见：
+
+![原生毛玻璃关闭（隔离实测）](screenshots/v1.2.2/native-acrylic-off.png)
+
+开启后，Windows 对窗口背后的条纹进行模糊。v1.2.2 在设置页「外观 → 桌面毛玻璃」中开启，默认关闭：
+
+![原生 Acrylic 开启（隔离实测）](screenshots/v1.2.2/native-acrylic-on.png)
+
 v1.2.1 浅色磨砂玻璃主题：银白半透明底、淡蓝高光，以及统一的卡片、设置页和详情页材质。点击主面板顶部的衣服图标可切换主题，已有主题选择会保留。
 
 下图使用浏览器演示数据，仅展示界面样式；本版本未接入 Windows 原生桌面背景模糊。
@@ -82,9 +92,11 @@ v1.2.0 主面板，默认窗口 384×660，仪表盘新增 V4 Flash Vision 行�
 
 ## 下载安装
 
-从 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest) 下载并运行 `DeepSeekMonitorWindows_1.2.1_x64-setup.exe`。覆盖安装新版本前无需卸载旧版本。
+从 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases/latest) 下载并运行 `DeepSeekMonitorWindows_1.2.2_x64-setup.exe`。覆盖安装新版本前无需卸载旧版本。
 
-v1.2.1 安装包 `DeepSeekMonitorWindows_1.2.1_x64-setup.exe` 的 SHA256：`D7F88BBCD204A3B38C2E722720D2A3D82975EC90B37586067C5DCE7211426767`。发布页同时提供 `*.sha256.txt` 校验附件。
+v1.2.2 安装包 SHA256 见发布页的 `*.sha256.txt` 校验附件。
+
+原生桌面毛玻璃需要 Windows 11 22H2（build 22621）及以上版本；Windows 10 和较旧 Windows 11 可继续使用普通背景。
 
 运行环境要求：
 
@@ -272,11 +284,20 @@ Rust 后端依赖：
 
 ## 更新日志
 
-原生桌面毛玻璃正在 `codex/native-acrylic` 分支验证，尚未包含在 v1.2.1 Release 中。候选版设置页新增默认关闭的「桌面毛玻璃」开关，使用 Windows 11 22H2 及以上的原生 Acrylic；不支持或调用失败时保留普通背景。浏览器预览不能验证原生模糊效果，最终需要隔离 Windows 测试账户中的视觉验收。
-
 完整发布记录见 [GitHub Releases](https://github.com/kakaluote1014/DeepSeekMonitorWindows/releases)。
 
+### v1.2.2
+
+- 接入 Windows 11 22H2 及以上的原生桌面 Acrylic，设置页「外观」新增默认关闭的「桌面毛玻璃」开关。
+- 系统不支持或原生调用失败时保留普通背景；开关偏好单独保存在界面本地存储中，凭据配置格式保持不变。
+- 原生材质随浅色/深色主题同步；启用时使用透明度更高的背景和适配的圆角。
+- 已在 Windows 11 build 22631 上使用独立配置和 WebView 目录验收原生效果、标题栏拖动、三种窗口尺寸、焦点切换、偏好恢复和关闭回退。
+- Rust 新增原生材质测试，完整单测为 11 项；未引入额外插件或依赖。
+- 同步设置页的版本号回退显示。
+
 ### v1.2.1
+
+安装包 SHA256：`D7F88BBCD204A3B38C2E722720D2A3D82975EC90B37586067C5DCE7211426767`。
 
 - 升级浅色主题为银白磨砂玻璃风格，加入淡蓝高光、柔和阴影与统一的卡片、按钮、输入框材质，覆盖主面板、设置页和模型详情页。
 - 主面板与详情页的 Flash 显示名称更新为 `V4.1 Flash`，继续保留旧模型 ID 的用量归并与 V4 Flash Vision 历史用量。
